@@ -1,0 +1,41 @@
+1
+00:00:00,000 --> 00:00:02,160
+This is messed up.
+
+2
+00:00:02,160 --> 00:00:02,880
+Hatch a chicken.
+
+3
+00:00:02,880 --> 00:00:03,840
+That shouldn't be hard.
+
+4
+00:00:03,840 --> 00:00:06,080
+Ah, I'm sure.
+
+5
+00:00:06,080 --> 00:00:07,680
+You just have to wait for them to lay an egg.
+
+6
+00:00:07,680 --> 00:00:08,400
+All right, have fun.
+
+7
+00:00:08,400 --> 00:00:09,920
+Carl, let's go harass other people.
+
+8
+00:00:09,920 --> 00:00:10,560
+OK, thanks.
+
+9
+00:00:13,560 --> 00:00:15,200
+Oh my god, you're so close.
+
+10
+00:00:15,200 --> 00:00:18,160
+Dude, this maze sucks, dude.
+
+
