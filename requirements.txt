@@ -1,0 +1,10 @@
+pytube
+selenium
+aiohttp
+bs4
+requests
+openai
+moviepy
+python-dotenv
+pysrt
+pillow<9.0.0

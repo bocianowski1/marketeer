@@ -1,0 +1,8 @@
+**/*__pycache__
+**/*.pyc
+**/*.env
+**/*config*.json
+**/*.md
+**/*.cpp
+channels.txt
+tmp.py
