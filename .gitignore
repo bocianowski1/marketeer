@@ -6,3 +6,4 @@
 **/*.cpp
 channels.txt
 tmp.py
+.DS_Store
