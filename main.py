@@ -26,6 +26,7 @@ import textwrap
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 
 print("--- Initializing Marketeer...")
 load_dotenv()
@@ -76,6 +77,61 @@ class Marketeer:
         self.transcript_folder = "transcripts"
         self.video_folder = "video"
         self.out_folder = "out"
+
+    async def get_video_urls(self, channel_name):
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            self.executor, self._get_video_urls, channel_name
+        )
+
+    def _get_video_urls(self, channel_name):
+        print("--- Fetching video URLs")
+        self.driver.get(f"https://www.youtube.com/c/{channel_name}/videos")
+
+        try:
+            aria_label = "Reject all"
+
+            button = self.driver.find_element(
+                By.XPATH, f"//button[@aria-label='{aria_label}']"
+            )
+            button.click()
+            print("--- Clicked button")
+            self.driver.implicitly_wait(2)
+        except Exception as e:
+            print(e)
+
+        print("--- Waited 1/2")
+        self.driver.implicitly_wait(2)
+
+        # scroll once to load more videos
+        print("--- Scrolling to the bottom of the page")
+        self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.END)
+        self.driver.implicitly_wait(1)
+
+        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+
+        if len(soup.find_all("a", {"id": "thumbnail"})) <= 1:
+            print("--- Initially, no videos found, scrolling and waiting")
+            self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.END)
+            self.driver.implicitly_wait(1)
+            print("--- Scrolled and done waiting")
+
+        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+
+        video_urls = []
+        for link in soup.find_all("a", {"id": "thumbnail"}):
+            href = link.get("href")
+            if href is None:
+                continue
+            if href.startswith("/watch"):
+                video_urls.append(f"https://www.youtube.com{href}")
+
+        if len(video_urls) > 3:
+            end = min(10, len(video_urls) - 1)
+            video_urls = video_urls[2:end]
+
+        print(len(video_urls), "videos found")
+        return video_urls
 
     async def create_video_clip(self, url, start_time, end_time):
         loop = asyncio.get_event_loop()
@@ -329,6 +385,7 @@ class Marketeer:
         subway_surfers = VideoFileClip("video/subway_surfers.mp4").set_duration(
             main_video.duration
         )
+        # subway_surfers = subway_surfers.set_audio(None)
 
         video = clips_array(
             [[main_video.resize(height=360)], [subway_surfers.resize(height=360)]]
@@ -352,7 +409,7 @@ class Marketeer:
                     method="caption",
                     size=(video.w * 0.6, 300),
                 )
-                .set_position(("center", video.h / 2 + 100))
+                .set_position(("center", video.h / 2 - 50))
                 .set_duration(end_time - start_time)
                 .set_start(start_time)
             )
@@ -363,37 +420,27 @@ class Marketeer:
         final_video = video_with_subtitles.fx(vfx.speedx, 1.1)
         final_video.write_videofile(output_path, codec="libx264", audio_codec="aac")
         final_video.close()
+        print("--- Sleeping for 2 seconds")
         time.sleep(2)
         print("--- Subtitled video created")
 
         return output_path
 
 
-async def process_url(url):
-    marketeer = Marketeer()
-    print("--- Processing", url)
-    # engagement = await marketeer.get_video_engagement(url)
-
-    start_time = 350
-    end_time = 367
-    # if engagement is not None:
-    #     print("--- Engagement")
-    #     start_time = max(
-    #         [e.seconds for e in engagement if e.engagement > ENGAGEMENT_THRESHOLD]
-    #     )
-    #     end_time = start_time + 30
-
-    await marketeer.create_video_clip(url, start_time, end_time)
-
-
 async def main():
-    urls = [
-        # "https://www.youtube.com/watch?v=5tSTk1083VY&ab_channel=PowerfulJRE",  # joe rogan
-        "https://www.youtube.com/watch?v=UgWHrA0-EOk&ab_channel=BetaSquad",  # beta squad
-        "https://www.youtube.com/watch?v=lJrHLnhJl-M&ab_channel=MrBeastGaming",  # mr beast
-    ]
+    marketeer = Marketeer()
 
-    tasks = [process_url(url) for url in urls]
+    urls = await marketeer.get_video_urls("BetaSquad")
+    if len(urls) == 0:
+        print("--- No videos found, returning...")
+        return
+
+    urls = urls[:3]
+
+    tasks = []
+    for url in urls:
+        tasks.append(marketeer.create_video_clip(url, 150, 180))
+
     await asyncio.gather(*tasks)
 
     print("--- Done")

@@ -7,3 +7,8 @@
 channels.txt
 tmp.py
 .DS_Store
+**/*.log
+
+audio
+video
+transcripts
